@@ -7,6 +7,8 @@ library(dplyr)
 library(maps)
 library(mapdata)
 library(rgdal)
+library(ggsn)
+library(sf)
 
 
 #Get basemap using ggmap:
@@ -30,7 +32,7 @@ study = c(31.821379, -110.866136)
 mapLabs = data.frame(
   long = c(phoenix[2], tucson[2], study[2]),
   lat = c(phoenix[1], tucson[1], study[1]),
-  name = c("Phoenix", "Tucson", "SRER"),
+  name = c("Phoenix", "Tucson", "Study Area"),
   stringsAsFactors = FALSE
 )
 
@@ -38,8 +40,10 @@ rownames(mapLabs) = mapLabs$name
 
 azBase = azBase + 
   geom_point(data = mapLabs, aes(x = long, y = lat), color = "black", size = 2, inherit.aes = FALSE) + 
-  geom_text(data = mapLabs, aes(x = long, y = lat, label = rownames(mapLabs)), hjust = 0, nudge_x = 0.25, inherit.aes = FALSE)
+  geom_text(data = mapLabs, aes(x = long, y = lat, label = rownames(mapLabs)), size = 7, hjust = 0, nudge_x = 0.05, inherit.aes = FALSE)
 
+#dev.off()
+#dev.new()
 azBase
 
 # Now make map of study area:
@@ -56,6 +60,18 @@ SAmap <- ggplot() +
           aes(x = long, y = lat, group = group),
           color = 'gray', fill = 'white', size = .2)
 
+
+dsn = "/Users/seanmhendryx/Google Drive/Thesis/Data/RectangularStudyArea.shp"
+
+#dsn <- system.file('extdata', package = 'ggsn')
+
+# Map in geographic coordinates
+shape = st_read(dsn = dsn, quiet = TRUE)
+
+blankSA = SAmap + blank() + north(shape) +
+  scalebar(data = shapefile_df, dist = 0.005, dd2km = TRUE, model = 'WGS84',  st.size = 0) #+ opts(legend.position = c(0, 1), legend.justification = c(0, 1))#+ theme(legend.position = c(0, 1)) #+  theme(legend.justification = "top") 
+
+
 saLoc = c(lon = -110.866136, lat =31.821379)
 sa = c(top = 31.821706,  left = -110.866841, bottom  =  31.820827, right = -110.865761)
 
@@ -69,4 +85,52 @@ limited = ggmap(saMap)  +
 dev.new()
 limited
 
-# North arrow and scale bar
+limited = limited + blank()
+dev.new()
+limited
+
+
+
+
+
+
+# North arrow and scale bar using ggsn
+# http://oswaldosantos.github.io/ggsn/
+mapSN = limited + blank() 
+dev.new()
+mapSN
+
+
+mapSN = mapSN + north(shape) +
+  scalebar(data = shape, dist = 0.005, dd2km = TRUE, model = 'WGS84',  st.size = 0) #+ opts(legend.position = c(0, 1), legend.justification = c(0, 1))#+ theme(legend.position = c(0, 1)) #+  theme(legend.justification = "top") 
+
+mapSN
+
+
+
+
+
+
+
+
+
+mapSN = limited +
+  blank() +
+  north(shapefile_df) +
+  scalebar(shapefile_df, dist = 5, dd2km = TRUE, model = 'WGS84')
+
+dev.new()
+mapSN
+
+
+# reproducing example
+library(ggsn); library(sf); library(ggplot2)
+dsn = "/Users/seanmhendryx/Google Drive/Thesis/Data/RectangularStudyArea.shp"
+
+#dsn <- system.file('extdata', package = 'ggsn')
+
+# Map in geographic coordinates
+shape <- st_read(dsn = dsn, quiet = TRUE)
+
+ggm1 <- ggplot(map) +
+    geom_sf() 
